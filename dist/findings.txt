@@ -1,0 +1,16 @@
+2012-03-05
+
+* rdfs:resource is not finalized after loading everything under ACL. rdfs:Class is finalized.
+
+* node.cl in LWW: not writing stuff results in bad code generation.
+
+* after loading everything, owl:oneOf has a slotds slot. This slot has 3 values (subject type is owl:Class, rdfs:Class, rdfs:Datatype) for ACL and 9 values for LWW (subject type are the same plus shadowed-class, owl:restriction, owl:cardinalityrestriction, owl:hasValuesRectriction, owl:someValuesFromrestriction, owl:allValuesFromRestriction)
+
+* while trying foo-owl.cl, College is added with url from topontologies.com under LWW and nil under ACL
+Name:COLLEGE
+URL:<http://www.TopOntologies.com/tools/SWCLOS#COLLEGE>
+CLS:NIL
+
+* in RdfsCore.cl, in addInstance
+             ;; If name is a blank node ID, definitely it is bound to an default object.
+blank node ID = (gensym) for LWW ?

@@ -1,0 +1,123 @@
+; cpu time (non-gc) 61,769,776 msec (17:09:29.776) user, 18,125 msec system
+; cpu time (gc)     289,349 msec (00:04:49.349) user, 406 msec system
+; cpu time (total)  62,059,125 msec (17:14:19.125) user, 18,531 msec system
+; real time  63,495,781 msec (17:38:15.781)
+; space allocation:
+;  236,995,464 cons cells, 1,595,181,224 other bytes, 21,632 static bytes
+:done
+gx-user(3): (query)
+
+=========================================================================
+-- query 1 ------------------
+; cpu time (non-gc) 561 msec user, 0 msec system
+; cpu time (gc)     32 msec user, 0 msec system
+; cpu time (total)  593 msec user, 0 msec system
+; real time  1,157 msec
+; space allocation:
+;  380,265 cons cells, 2,016,184 other bytes, 0 static bytes
+Number of Answer:4
+-- query 2 ------------------
+; cpu time (non-gc) 546,744 msec (00:09:06.744) user, 109 msec system
+; cpu time (gc)     7,990 msec user, 0 msec system
+; cpu time (total)  554,734 msec (00:09:14.734) user, 109 msec system
+; real time  564,485 msec (00:09:24.485)
+; space allocation:
+;  348,726,038 cons cells, 2,002,080,832 other bytes, 0 static bytes
+Number of Answer:9
+-- query 3 ------------------
+; cpu time (non-gc) 1,218 msec user, 0 msec system
+; cpu time (gc)     16 msec user, 0 msec system
+; cpu time (total)  1,234 msec user, 0 msec system
+; real time  1,234 msec
+; space allocation:
+;  857,153 cons cells, 6,217,688 other bytes, 0 static bytes
+Number of Answer:6
+-- query 4 ------------------
+; cpu time (non-gc) 1,391 msec user, 0 msec system
+; cpu time (gc)     0 msec user, 0 msec system
+; cpu time (total)  1,391 msec user, 0 msec system
+; real time  1,391 msec
+; space allocation:
+;  277,191 cons cells, 908,864 other bytes, 0 static bytes
+Number of Answer:34
+-- query 5 ------------------
+; cpu time (non-gc) 147,010 msec (00:02:27.010) user, 31 msec system
+; cpu time (gc)     4,396 msec user, 0 msec system
+; cpu time (total)  151,406 msec (00:02:31.406) user, 31 msec system
+; real time  153,469 msec (00:02:33.469)
+; space allocation:
+;  260,504,839 cons cells, -3,458,731,720 other bytes, 0 static bytes
+Number of Answer:719
+-- query 6 ------------------
+; cpu time (non-gc) 219 msec user, 0 msec system
+; cpu time (gc)     0 msec user, 0 msec system
+; cpu time (total)  219 msec user, 0 msec system
+; real time  218 msec
+; space allocation:
+;  295,268 cons cells, 339,408 other bytes, 0 static bytes
+Number of Answer:48582
+-- query 7 ------------------
+; cpu time (non-gc) 9,518 msec user, 0 msec system
+; cpu time (gc)     139 msec user, 0 msec system
+; cpu time (total)  9,657 msec user, 0 msec system
+; real time  10,422 msec
+; space allocation:
+;  6,814,208 cons cells, 32,216,712 other bytes, 0 static bytes
+Number of Answer:67
+-- query 8 ------------------
+; cpu time (non-gc) 2,024,060 msec (00:33:44.060) user, 578 msec system
+; cpu time (gc)     64,971 msec (00:01:04.971) user, 78 msec system
+; cpu time (total)  2,089,031 msec (00:34:49.031) user, 656 msec system
+; real time  2,170,161 msec (00:36:10.161)
+; space allocation:
+;  -652,613,886 cons cells, 3,129,621,144 other bytes, 12,360 static bytes
+Number of Answer:7790
+-- query 9 ------------------
+; cpu time (non-gc) 6,218 msec user, 0 msec system
+; cpu time (gc)     110 msec user, 0 msec system
+; cpu time (total)  6,328 msec user, 0 msec system
+; real time  6,375 msec
+; space allocation:
+;  3,857,342 cons cells, 20,332,848 other bytes, 0 static bytes
+Number of Answer:1245
+-- query 10 -----------------
+; cpu time (non-gc) 2,530 msec user, 0 msec system
+; cpu time (gc)     32 msec user, 0 msec system
+; cpu time (total)  2,562 msec user, 0 msec system
+; real time  2,593 msec
+; space allocation:
+;  1,924,940 cons cells, 8,308,680 other bytes, 0 static bytes
+Number of Answer:4
+-- query 11 -----------------
+; cpu time (non-gc) 281 msec user, 0 msec system
+; cpu time (gc)     0 msec user, 0 msec system
+; cpu time (total)  281 msec user, 0 msec system
+; real time  344 msec
+; space allocation:
+;  61,057 cons cells, 370,624 other bytes, 0 static bytes
+Number of Answer:224
+-- query 12 -----------------
+; cpu time (non-gc) 1,156 msec user, 0 msec system
+; cpu time (gc)     0 msec user, 0 msec system
+; cpu time (total)  1,156 msec user, 0 msec system
+; real time  1,156 msec
+; space allocation:
+;  124,404 cons cells, 44,464 other bytes, 0 static bytes
+Number of Answer:15
+-- query 13 -----------------
+; cpu time (non-gc) 239,031 msec (00:03:59.031) user, 31 msec system
+; cpu time (gc)     234 msec user, 0 msec system
+; cpu time (total)  239,265 msec (00:03:59.265) user, 31 msec system
+; real time  243,609 msec (00:04:03.609)
+; space allocation:
+;  4,736,298 cons cells, 5,583,096 other bytes, 0 static bytes
+Number of Answer:1
+-- query 14 -----------------
+; cpu time (non-gc) 16 msec user, 0 msec system
+; cpu time (gc)     0 msec user, 0 msec system
+; cpu time (total)  16 msec user, 0 msec system
+; real time  15 msec
+; space allocation:
+;  73,365 cons cells, 227,656 other bytes, 0 static bytes
+Number of Answer:36682
+=========================================================================

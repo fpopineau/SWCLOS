@@ -1,0 +1,5 @@
+swclos\swclos.asd
+cl-log\cl-log.asd
+swclos\RDF\RDF.asd
+swclos\OWL\OWL.asd
+swclos\RDFS\RDFS.asd
