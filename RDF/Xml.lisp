@@ -32,7 +32,7 @@
 
 (eval-when (:execute :load-toplevel :compile-toplevel)
   (require :swclospackages)
-  ) ; end of eval-when
+  )                                     ; end of eval-when
 
 (in-package :|xsd|)
 
@@ -156,7 +156,7 @@
 (cl:deftype |nonNegativeInteger| () "integer greater than -1" '(cl:integer 0 cl:*))
 
 (cl:deftype |float| () "floating point number in lisp" 'cl:single-float)
-(cl:deftype |double| () "double floating point number in lisp"'cl:double-float)
+(cl:deftype |double| () "double floating point number in lisp" 'cl:double-float)
 
 (cl:deftype |decimal| () "rational number in lisp, which should be revised in future." 'cl:rational)
 
@@ -169,7 +169,7 @@
 (cl:deftype |anySimpleType| () "xsd:boolean, xsd:anyURI, xsd:string, xsd:float, xsd:double, or xsd:decimal"
   '(cl:or |boolean| |anyURI| |string| |float| |double| |decimal|))
 
-(cl:declaim (cl:special |nonPositiveInteger| |nonNegativeInteger| |anySimpleType|))
+;(cl:declaim (cl:special |nonPositiveInteger| |nonNegativeInteger| |anySimpleType|))
 
 #|
 ;-------------------------------------------

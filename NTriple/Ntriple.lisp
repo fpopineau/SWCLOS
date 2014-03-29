@@ -753,7 +753,7 @@
       (setq string (subseq string 1 (1- (length string)))) ; strip " and "
       (cond ((and (cl::< i (length literal)) (char= (char literal i) #\@))
              (let ((lang (parse-language literal (1+ i))))
-               (make-instance '|rdf|:|inLang| :lang (intern lang "keyword") :content string)))
+               (make-instance '|rdf|:|inLang| :lang (intern lang (symbol-name :keyword)) :content string)))
             (t string)))))
 
 (defun intern-datatypeString (literal)
@@ -874,4 +874,3 @@
 
 ;; End of module
 ;; --------------------------------------------------------------------
-

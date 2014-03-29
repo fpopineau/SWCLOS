@@ -8,7 +8,8 @@
 
 (cl:defpackage :gx
   (:use :common-lisp)
-  (:export mappend))
+  (:export mappend squash length=1 splice-seq-on null-string-p
+           match))
 
 (in-package :gx)
 
@@ -78,6 +79,39 @@
       x-y
     (cons x y)))
 
+;;;; Queues:
+
+;;; A queue is a (last . contents) pair
+
+(defun queue-contents (q) (cdr q))
+
+(defun make-queue ()
+  "Build a new queue, with no elements."
+  (let ((q (cons nil nil)))
+    (setf (car q) q)))
+
+(defun enqueue (item q)
+  "Insert item at the end of the queue."
+  (setf (car q)
+        (setf (rest (car q))
+              (cons item nil)))
+  q)
+
+(defun dequeue (q)
+  "Remove an item from the front of the queue."
+  (pop (cdr q))
+  (if (null (cdr q)) (setf (car q) q))
+  q)
+
+(defun front (q) (first (queue-contents q)))
+
+(defun empty-queue-p (q) (null (queue-contents q)))
+
+(defun queue-nconc (q list)
+  "Add the elements of LIST to the end of the queue."
+  (setf (car q)
+    (last (setf (rest (car q)) list))))
+
 ;;;
 ;;;; Delay Evaluation from OnLisp
 ;;;
@@ -111,6 +145,32 @@
 (defun set-delay-role (role)
   (setf (get role 'delay) t))
 
+(defun split-seq-on (str &optional (ch #\Space))
+  "returns a list of strings formed by breaking <str> at every occurence
+of <ch> (which is not included).  Works for any sequence, not just strings,
+but optimized for vectors."
+  (when str
+    (do* ((prev-pos 0 (1+ next-pos))
+          (next-pos (position ch str)
+                    (position ch str :start prev-pos))
+          (stuff (list (subseq str 0 next-pos))
+                 (cons (subseq str prev-pos next-pos)
+                       stuff)))
+         ((null next-pos) (nreverse stuff)))))
+
+(defun splice-seq-on (lst &optional (ch #\Space))
+  "returns a string formed by splicing every elements in <lst> with inserting <ch>."
+  (when (null lst) (return-from splice-seq-on nil))
+  (if (length=1 lst) (car lst)
+    (labels ((seq-loop (lst)
+                       (if (length=2 lst)
+                           (list (first lst)
+                                 (make-sequence 'cl:string 1 :initial-element ch)
+                                 (second lst))
+                         (cons (first lst)
+                               (cons (make-sequence 'cl:string 1 :initial-element ch)
+                                     (seq-loop (cdr lst)))))))
+      (apply #'concatenate 'cl:string (seq-loop lst)))))
 
 #|
 
@@ -165,11 +225,18 @@
         (t (list x))))
 
 ;;;
+;;; String Utils
+;;;
+
+(defun last-char (str)
+  (char str (1- (length str))))
+
+;;;
 ;;;; String Pattern
 ;;;
 
 (defun match (source target &optional (start 0))
-  "compares <source> string to <target> string starting <start> in <target>.
+  "compares <source> string to <target> string starting at <start> in <target>.
    and all characters in <source> are matched to <target> in order, returns true."
   (let ((result (mismatch source target :start2 start :test #'char=)))
     (or (null result)                ; just same string
@@ -201,7 +268,7 @@
 
 (declaim (inline null-string-p))
 (defun null-string-p (str)
-  (string= str ""))
+  (or (null str) (string= str "")))
 
 ;; End of module
 ;; --------------------------------------------------------------------

@@ -476,9 +476,9 @@
       (let ((cpl (remove c1
                          (cond ((mop:class-finalized-p c1)
                                 (clos:class-precedence-list c1))
-                               (t 
-				#+allegro (mop:compute-class-precedence-list c1)
-				#+lispworks (progn
+                               (t
+				#+(or allegro lispworks) (mop:compute-class-precedence-list c1)
+				#+nil (progn
 					      (setf (mop:class-direct-superclasses c1)
 						    (closette::std-sort-class-list (mop:class-direct-superclasses c1)))
 					      (closette::std-compute-class-precedence-list c1))
@@ -527,7 +527,7 @@
 
 (defun shared-initialize-after-for-complementOf (class complements)
   (loop for complement in complements with result
-      unless (eql class |owl|:|Nothing|)  ; |owl|:|Nothing| is complement to any object.
+      unless (eql class |owl|:|Nothing|)  ; owl:Nothing is complement to any object.
       do (cond ((setq result (check-instance-sharing class complement))
                 (error 'complementof-condition-unsatiafiable
                   :format-control "~S has super-sub relation to ~S."
@@ -579,11 +579,11 @@
                       class sib class)
                     (reinitialize-instance class :direct-superclasses new-supers)))))))
 
-#+nil (defun intersection-p (class)
+(defun intersection-p (class)
   (and (cl:typep class |owl|:|Class|)
        (slot-boundp class '|owl|:|intersectionOf|)))
 
-#+nil (defun intersection-of (class)
+(defun intersection-of (class)
   (and (cl:typep class |owl|:|Class|)
        (slot-boundp class '|owl|:|intersectionOf|)
        (slot-value class '|owl|:|intersectionOf|)))
@@ -1088,16 +1088,16 @@
 ;;;; Transitivity
 ;;;
 
-#+nil (defun transitive-p (obj)
+(defun transitive-p (obj)
   (cond ((slot-value obj 'inverse-transitive) t)
         ((some #'(lambda (prop) (and (slot-boundp obj prop) (slot-value obj prop)))
                (collect-owl-role-name-if #'transitive-property-p obj)))))
 
-#+nil (defun transitive-subp (property sub super &optional visited)
+(defun transitive-subp (property sub super &optional visited)
   (or (eql sub super)
       (if (member sub visited) nil
         (strict-transitive-subp property sub super visited))))
-#+nil (defun strict-transitive-subp (property sub super visited)
+(defun strict-transitive-subp (property sub super visited)
   (let ((supers (and (slot-exists-p sub property)
                      (slot-boundp sub property)
                      (slot-value sub property))))
@@ -1108,12 +1108,12 @@
                                  super
                                  (cons sub visited)))))
 
-#+nil (defun strict-transitive-superp (property super sub)
+(defun strict-transitive-superp (property super sub)
   (and (not (eql super sub)) (strict-transitive-subp property sub super nil)))
-#+nil (defun strict-include-p (property super sub)
+(defun strict-include-p (property super sub)
   (and (not (eql super sub)) (strict-transitive-subp property sub super nil)))
 
-#+nil (defun most-specific-transitives (property transitives)
+(defun most-specific-transitives (property transitives)
   (let ((l (remove-duplicates transitives)))    ; eql should be assured
     (set-difference l l :test #'(lambda (x y) (strict-transitive-superp property x y)))))
 
@@ -1274,7 +1274,7 @@
                        (equivalent-classes-of c))
                  t))))
 
-#+nil (defun %owl-complement-p (cc dd)
+(defun %owl-complement-p (cc dd)
   (and (slot-exists-p dd 'complement-class)
        (slot-boundp dd 'complement-class)
        (equal cc (slot-value dd 'complement-class))))
@@ -1311,7 +1311,7 @@
              (when range
                (slot-value-range-check '|owl|:|hasValue| hasvalues range)))
            (let* ((name (name property))
-                  (slotd (find name (mop:class-direct-slots class) :key #'cg::name))
+                  (slotd (find name (mop:class-direct-slots class) :key #'name))
                #|   (initfun (cond ((symbolp hasvalues)
                                   (eval (excl::compute-initfunction-function
                                          hasvalues 'mop:slot-definition-initfunction
@@ -1332,7 +1332,7 @@
                   )
              ;; see update-onPropertyConstraints-for
              (cond (slotd
-                    #+allegro (reinitialize-instance slotd
+                    #+(or allegro lispworks) (reinitialize-instance slotd
                                                  :name name
                                                  :type (make-instance 'fills
                                                          :role name
@@ -1340,7 +1340,8 @@
                                                          :subject-type class)
                                                  ;:initform hasvalues :initfunction initfun
                                                  )
-                    #+lispworks (setf (slot-value slotd 'cl::type)
+                    #+nil (setf (slot-value slotd 'name) name
+                                      (slot-value slotd 'cl::type)
                                       (make-instance 'fills
                                                      :role name
                                                      :filler hasvalues
@@ -1348,26 +1349,39 @@
                                       ))
                    (t (case name
                         ((|rdfs|:|range|)
-                         (mop::reinitialize-instance
-                          class
-                          :direct-slots
-                          `((:name ,name :initargs `(,name)
-                                               :type ,(make-instance 'fills
-                                                                    :role name
-                                                                    :filler hasvalues
-                                                                    :subject-type class)
-                                               :subject-type ,class)))
-                          #+nil (push (make-instance 'gx::Property-direct-slot-definition
-                                               :name name :initargs `(,name)
-                                               :type (make-instance 'fills
-                                                                    :role name
-                                                                    :filler hasvalues
-                                                                    :subject-type class)
-                                               :subject-type class
+                         #+nil (push (make-instance 'gx::Property-direct-slot-definition
+                                                        :name name :initargs `(,name)
+                                                        :type (make-instance 'fills
+                                                                             :role name
+                                                                             :filler hasvalues
+                                                                             :subject-type class)
+                                                        :subject-type class
                                         ;:initform hasvalues :initfunction initfun
-                                               )
-                                (mop:class-direct-slots class)))
-                        (otherwise
+                                                        )
+                                         (mop:class-direct-slots class))
+                         #+(or allegro lispworks) (mop::reinitialize-instance
+                                      class
+                                      :direct-slots
+                                      `((:name ,name :initargs `(,name)
+                                               :type ,(make-instance 'fills
+                                                                     :role name
+                                                                     :filler hasvalues
+                                                                     :subject-type class)
+                                               :subject-type ,class))))
+                         (otherwise
+                          #+nil (push (make-instance 'OwlProperty-direct-slot-definition
+                                                         :documentation (format nil
+                                                                                "From hasValueRestriction ~S" class)
+                                                         :name name :initargs `(,name)
+                                                         :type (make-instance 'fills
+                                                                              :role name
+                                                                              :filler hasvalues
+                                                                              :subject-type class)
+                                                         :subject-type class
+                                        ;:initform hasvalues :initfunction initfun
+                                                         )
+                                          (mop:class-direct-slots class))
+                          #+(or allegro lispworks)
                          (mop::reinitialize-instance
                           class
                           :direct-slots
@@ -1378,18 +1392,7 @@
                                                    :filler hasvalues
                                                    :subject-type class)
                              :subject-type ,class)))
-                          #+nil (push (make-instance 'OwlProperty-direct-slot-definition
-                                               :documentation (format nil
-                                                                      "From hasValueRestriction ~S" class)
-                                               :name name :initargs `(,name)
-                                               :type (make-instance 'fills
-                                                                    :role name
-                                                                    :filler hasvalues
-                                                                    :subject-type class)
-                                               :subject-type class
-                                        ;:initform hasvalues :initfunction initfun
-                                               )
-                                (mop:class-direct-slots class)))))))))))
+                         )))))))))
 
 (defmethod shared-initialize :after
   ((class |owl|:|someValuesFromRestriction|) slot-names &rest initargs)
@@ -1401,21 +1404,30 @@
          (let ((property (slot-value class '|owl|:|onProperty|))
                (somevalues (slot-value class '|owl|:|someValuesFrom|)))
            (let* ((name (name property))
-                  (slotd (find name (mop:class-direct-slots class) :key #'cg::name)))
+                  (slotd (find name (mop:class-direct-slots class) :key #'name)))
              (cond (slotd
-                    #+allegro (reinitialize-instance slotd :name name
+                    #+nil (reinitialize-instance slotd :name name
                                                      :type (make-instance 'exists
                                                                           :role name
                                                                           :filler somevalues
                                                                           :subject-type class))
-                    #+lispworks (setf (slot-value slotd 'cl::type)
+                    #+(or allegro lispworks) (setf (slot-value slotd 'cl::type)
                                       (make-instance 'exists
                                                      :role name
                                                      :filler somevalues
                                                      :subject-type class)))
                    (t (case name
                         ((|rdfs|:|range|)
-                         (mop::reinitialize-instance
+                         #+nil (push (make-instance 'gx::Property-direct-slot-definition
+                                                        :name name :initargs `(,name)
+                                                        :type (make-instance 'exists
+                                                                             :role name
+                                                                             :filler somevalues
+                                                                             :subject-type class)
+                                                        :documentation "From someValuesFromRestriction as range"
+                                                        :subject-type class)
+                                         (mop:class-direct-slots class))
+                         #+(or allegro lispworks) (mop::reinitialize-instance
                           class
                           :direct-slots
                           `((:name ,name :initargs (,name)
@@ -1424,18 +1436,18 @@
                                                                     :filler somevalues
                                                                     :subject-type class)
                                                :documentation "From someValuesFromRestriction as range"
-                                               :subject-type ,class)))
-                          #+nil (push (make-instance 'gx::Property-direct-slot-definition
-                                               :name name :initargs `(,name)
-                                               :type (make-instance 'exists
-                                                                    :role name
-                                                                    :filler somevalues
-                                                                    :subject-type class)
-                                               :documentation "From someValuesFromRestriction as range"
-                                               :subject-type class)
-                                (mop:class-direct-slots class)))
+                                               :subject-type ,class))))
                         (otherwise
-                         (mop::reinitialize-instance
+                         #+nil (push (make-instance 'OwlProperty-direct-slot-definition
+                                                        :name name :initargs `(,name)
+                                                        :type (make-instance 'exists
+                                                                             :role name
+                                                                             :filler somevalues
+                                                                             :subject-type class)
+                                                        :documentation "From someValuesFromRestriction"
+                                                        :subject-type class)
+                                         (mop:class-direct-slots class))
+                         #+(or allegro lispworks) (mop::reinitialize-instance
                           class
                           :direct-slots
                           `((:name ,name :initargs (,name)
@@ -1445,15 +1457,7 @@
                                                                     :subject-type class)
                                                :documentation "From someValuesFromRestriction"
                                                :subject-type ,class)))
-                          #+nil (push (make-instance 'OwlProperty-direct-slot-definition
-                                               :name name :initargs `(,name)
-                                               :type (make-instance 'exists
-                                                                    :role name
-                                                                    :filler somevalues
-                                                                    :subject-type class)
-                                               :documentation "From someValuesFromRestriction"
-                                               :subject-type class)
-                                (mop:class-direct-slots class)))))))))))
+                          )))))))))
 
 (defmethod shared-initialize :after
   ((class |owl|:|allValuesFromRestriction|) slot-names &rest initargs)
@@ -1485,7 +1489,7 @@
                        (most-specific-concepts
                         (append (mklist range) (mop:class-direct-superclasses allvalues))))))) |#
 
-             (let ((slotd (find name (mop:class-direct-slots class) :key #'cg::name)))
+             (let ((slotd (find name (mop:class-direct-slots class) :key #'name)))
                (cond (slotd
                       #+nil (reinitialize-instance slotd
                                                    :name name
@@ -1493,13 +1497,22 @@
                                                            :role name
                                                            :filler allvalues
                                                            :subject-type class))
-                      (setf (slot-value slotd 'cl::type) (make-instance 'forall
+                      #+(or allegro lispworks) (setf (slot-value slotd 'cl::type) (make-instance 'forall
                                                            :role name
                                                            :filler allvalues
                                                            :subject-type class)))
                      (t (case name
                           ((|rdfs|:|range|)
-                           (mop::reinitialize-instance
+                           #+nil (push (make-instance 'gx::Property-direct-slot-definition
+                                                          :name name :initargs `(,name)
+                                                          :type (make-instance 'forall
+                                                                               :role name
+                                                                               :filler allvalues
+                                                                               :subject-type class)
+                                                          :documentation "From allValuesFromRestriction as range"
+                                                          :subject-type class)
+                                           (mop:class-direct-slots class))
+                           #+(or allegro lispworks) (mop::reinitialize-instance
                             class
                             :direct-slots `((:name ,name :initargs (,name)
                                                  :type ,(make-instance 'forall
@@ -1508,17 +1521,18 @@
                                                                       :subject-type class)
                                    :documentation "From allValuesFromRestriction as range"
                                    :subject-type ,class)))
-                            #+nil (push (make-instance 'gx::Property-direct-slot-definition
-                                                 :name name :initargs `(,name)
-                                                 :type (make-instance 'forall
-                                                                      :role name
-                                                                      :filler allvalues
-                                                                      :subject-type class)
-                                   :documentation "From allValuesFromRestriction as range"
-                                   :subject-type class)
-                                  (mop:class-direct-slots class)))
+                           )
                           (otherwise
-                           (mop::reinitialize-instance
+                           #+nil (push (make-instance 'OwlProperty-direct-slot-definition
+                                                          :name name :initargs `(,name)
+                                                          :type (make-instance 'forall
+                                                                               :role name
+                                                                               :filler allvalues
+                                                                               :subject-type class)
+                                                          :documentation "From allValuesFromRestriction"
+                                                          :subject-type class)
+                                           (mop:class-direct-slots class))
+                           #+(or allegro lispworks) (mop::reinitialize-instance
                             class
                             :direct-slots `((:name ,name :initargs (,name)
                                                  :type ,(make-instance 'forall
@@ -1527,15 +1541,7 @@
                                                                       :subject-type class)
                                                  :documentation "From allValuesFromRestriction"
                                                  :subject-type ,class)))
-                            #+nil (push (make-instance 'OwlProperty-direct-slot-definition
-                                                 :name name :initargs `(,name)
-                                                 :type (make-instance 'forall
-                                                                      :role name
-                                                                      :filler allvalues
-                                                                      :subject-type class)
-                                                 :documentation "From allValuesFromRestriction"
-                                                 :subject-type class)
-                                  (mop:class-direct-slots class))))))))))))
+                           ))))))))))
 
 (defmethod shared-initialize :after
   ((class |owl|:|cardinalityRestriction|) slot-names &rest initargs)
@@ -1552,7 +1558,7 @@
                                        (slot-value class '|owl|:|minCardinality|)))
                   (cardinality (and (slot-boundp class '|owl|:|cardinality|)
                                     (slot-value class '|owl|:|cardinality|)))
-                  (slotd (find name (mop:class-direct-slots class) :key #'cg::name)))
+                  (slotd (find name (mop:class-direct-slots class) :key #'name)))
              (when (datatype-p (class-of cardinality))
                (setq cardinality (value-of cardinality)))
              (assert (or (null cardinality) (integerp cardinality)))
@@ -1562,10 +1568,10 @@
                                            :name name
                                            :maxcardinality cardinality
                                            :mincardinality cardinality)
-                    (setf (slot-value slotd 'mincardinality) cardinality)
-                    (setf (slot-value slotd 'maxcardinality) cardinality)
+                    #+(or allegro lispworks) (setf (slot-value slotd 'mincardinality) cardinality)
+                    #+(or allegro lispworks) (setf (slot-value slotd 'maxcardinality) cardinality)
                     ;(format t "~%Done slotd~%")
-                    slotd
+                    #+(or allegro lispworks) slotd
                     )
 
                    (t
@@ -1574,20 +1580,21 @@
                       (setq maxcardinality (value-of maxcardinality)))
                     (when (datatype-p (class-of mincardinality))
                       (setq mincardinality (value-of mincardinality)))
-                    (mop::reinitialize-instance
+                    #+nil (push (make-instance 'OwlProperty-direct-slot-definition
+                                                   :documentation (format nil
+                                                                          "From cardinalityRestriction ~S" class)
+                                                   :name name :initargs `(,name)
+                                                   :maxcardinality (or maxcardinality cardinality)
+                                                   :mincardinality (or mincardinality cardinality))
+                                    (mop:class-direct-slots class))
+                    #+(or allegro lispworks) (mop::reinitialize-instance
                      class
                      :direct-slots `((:documentation ,(format nil "From cardinalityRestriction ~S" class)
                                           :name ,name :initargs (,name)
                                           :maxcardinality ,(or maxcardinality cardinality)
                                           :mincardinality ,(or mincardinality cardinality))))
 		    ;(format t "HERE IT IS~%~{~S~%~}~%" (mop:class-slots class))
-                     #+nil (push (make-instance 'OwlProperty-direct-slot-definition
-                                          :documentation (format nil
-                                                                 "From cardinalityRestriction ~S" class)
-                                          :name name :initargs `(,name)
-                                          :maxcardinality (or maxcardinality cardinality)
-                                          :mincardinality (or mincardinality cardinality))
-                          (mop:class-direct-slots class)))))))))
+                    )))))))
 
 ;;;
 ;;;; For owl:equivalentProperty
@@ -1676,7 +1683,7 @@
         (let ((equivs (union (mklist domain) (mklist range))))
           (loop for cls in equivs
               do (unless (owl-class-p cls)
-                   (warn "~S |rdfs|:|type| |owl|:|Class| by |owl|:|SymmetricProperty| entailment." cls)
+                   (warn "~S rdfs:type owl:Class by owl:SymmetricProperty entailment." cls)
                    (change-class cls |owl|:|Class|))
                 (setf (slot-value cls 'equivalent-classes) equivs)
                 ))))))
@@ -1740,17 +1747,17 @@
 ;;; We construct every inference upon subsumption-basis.
 ;;; Subsumption is infered by structural subsumption algorithms, here.
 
-#+nil (defun union-of (class)
+(defun union-of (class)
   (and (slot-exists-p class '|owl|:|unionOf|)
        (slot-boundp class '|owl|:|unionOf|)
        (slot-value class '|owl|:|unionOf|)))
 
-#+nil (defun complement-of (class)
+(defun complement-of (class)
   (and (slot-exists-p class '|owl|:|complementOf|)
        (slot-boundp class '|owl|:|complementOf|)
        (slot-value class '|owl|:|complementOf|)))
 
-#+nil (defun onproperty-of (restriction)
+(defun onproperty-of (restriction)
   (and (slot-exists-p restriction '|owl|:|onProperty|)
        (slot-boundp restriction '|owl|:|onProperty|)
        (slot-value restriction '|owl|:|onProperty|)))
@@ -2018,4 +2025,3 @@
   (|rdfs|:|subClassOf| (|owl|:|Restriction| (|owl|:|onProperty| |rdfs|:|range|)
                                     (|owl|:|allValuesFrom| |owl|:|Class|))))
 |#
-

@@ -46,7 +46,7 @@
 #+lispworks
  (setf hcl:*handle-existing-defpackage* '(:warn :add))
 
-) 
+)
 
 #+sbcl
 (cl-user::package-add-nicknames :sb-pcl :mop)
@@ -90,7 +90,7 @@
     (defun excl::find-external-format (stream)
       :default)
   )
-)					; eval-chen
+)					; eval-when
 
 #+lispworks  (export 'excl::find-external-format 'excl)
 
@@ -104,6 +104,12 @@
     (setf symbol (read stream))
     (setf (readtable-case *readtable*) oldcase)
     (intern (coerce (cons firstchar (coerce (symbol-name symbol) 'list)) 'string))))
+
+#+allegro
+(without-package-locks
+    (progn
+      (shadowing-import 'excl::compute-effective-slot-definition-initargs :mop)
+      (export 'excl::compute-effective-slot-definition-initargs :mop)))
 
 #+lispworks
 (progn
@@ -150,6 +156,10 @@
 #+lispworks
 (setf clos::*CHECK-MAKE-INSTANCE-INITARGS* nil)
 
+#+lispworks6.1
+(clos:set-clos-initarg-checking nil)
+;; (setf clos::*DO-CHECK-INITARGS* nil)
+
 #+nil
 (setf dbg::*debug-print-length* 1024
       dbg::*debug-print-level* 16
@@ -159,7 +169,7 @@
 #+(or lispworks sbcl)
 (cl:defpackage :gx
   ; (:use :common-lisp)
-  (:shadowing-import-from #+lispworks clos #+sbcl sb-pcl 
+  (:shadowing-import-from #+lispworks clos #+sbcl sb-pcl
 			  #:name
                           #:default-initargs
                           #:direct-default-initargs
@@ -179,7 +189,7 @@
                           #:dependents
                           ))
 
-
+#|
 (defpackage :closette
   (:use :common-lisp :mop)
   (:export std-compute-class-precedence-list std-sort-class-list))
@@ -303,5 +313,4 @@
   (format t "Rewiring compute-class-precedence-list for class ~S => ~S~%" class
             (closette::std-compute-class-precedence-list class))
   (closette::std-compute-class-precedence-list class))
-
-
+|#

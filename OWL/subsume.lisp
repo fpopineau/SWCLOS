@@ -22,39 +22,6 @@
 (in-package :gx)
 
 ;;;
-;;; We construct every inference upon subsumption-basis.
-;;; Subsumption is infered by structural subsumption algorithms, here.
-
-(defun union-of (class)
-  (and (slot-exists-p class '|owl|:|unionOf|)
-       (slot-boundp class '|owl|:|unionOf|)
-       (slot-value class '|owl|:|unionOf|)))
-
-(defun complement-of (class)
-  (and (slot-exists-p class '|owl|:|complementOf|)
-       (slot-boundp class '|owl|:|complementOf|)
-       (slot-value class '|owl|:|complementOf|)))
-
-(defun onproperty-of (restriction)
-  (and (slot-exists-p restriction '|owl|:|onProperty|)
-       (slot-boundp restriction '|owl|:|onProperty|)
-       (slot-value restriction '|owl|:|onProperty|)))
-
-(defun intersection-p (class)
-  (and (cl:typep class |owl|:|Class|)
-       (slot-boundp class '|owl|:|intersectionOf|)))
-
-(defun intersection-of (class)
-  (and (cl:typep class |owl|:|Class|)
-       (slot-boundp class '|owl|:|intersectionOf|)
-       (slot-value class '|owl|:|intersectionOf|)))
-
-(defun %owl-complement-p (cc dd)
-  (and (slot-exists-p dd 'complement-class)
-       (slot-boundp dd 'complement-class)
-       (equal cc (slot-value dd 'complement-class))))
-
-;;;
 ;;;; Subsumption
 ;;;
 
@@ -216,6 +183,7 @@
               (remove-if-not #'(lambda (x) (cl:typep x (symbol-value '|owl|:|cardinalityRestriction|))) drestrs)
               (remove-if #'(lambda (x) (cl:typep x (symbol-value '|owl|:|cardinalityRestriction|))) drestrs))))))
 (defun %intersection-restriction-subsumed-p (cslots dprops dcards dcnsts)
+  ;(format t "~%CSLOTS~{~S~%~}" cslots)
   (loop for prop in dprops
       always
         (flet ((onproperty-p (x) (eq prop (name (onproperty-of x))))

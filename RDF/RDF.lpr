@@ -12,7 +12,7 @@
                  (make-instance 'module :name "NameSpace")
                  (make-instance 'module :name "Literal")
                  (make-instance 'module :name "RDFShare")
-                 (make-instance 'module :name "Rdf")
+                 (make-instance 'module :name "RdfParser")
                  (make-instance 'module :name "RdfReader")
                  (make-instance 'module :name "node"))
   :projects nil

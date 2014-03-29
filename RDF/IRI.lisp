@@ -12,28 +12,33 @@
 (cl:defpackage :gx
   (:shadow uri )
   (:use :common-lisp :net.uri)
-  (:export "iri" "boundp" "bound-value" 
+  (:export "iri" "boundp" "bound-value" "iri-escape-for-symbol-name"
    ))
 
 (in-package :gx)
 
 ;;;
-;;;; IRI in SWCLOS and Rbase system
+;;;; IRI in SWCLOS system
 ;;;
-;;; Every uri for RDF is globally unique in the WWW. Therefore, a uri in SWCLOS must 
-;;; be unique. The uniqueness of uri is assured by interning a uri. 
+;;; Any IRI must be unique in SWCLOS, because any IRI or URI is unique in the WWW.
+;;; The uniqueness of IRI is assured by interning it in SWCLOS system.
+;;;
+;;; IRIs are defined similarly to URIs, but the set of unreserved characters is
+;;; extended by adding the characters of UNICODE. Thus, using Allegro Lisp non-alisp8
+;;; system, IRI library that allows UNICODE characters are naturally equivalent to URI
+;;; library in ACL.
 ;;;
 ;;; A triple subject/predicate/object in RDF is embodied as CLOSobject/slotname/slotvalue
-;;; in SWCLOS, and subjective CLOSobject is bound to the subjective uri. Precisely, 
-;;; a subjective uri is an instance of class <iri> in SWCLOS and Rbase that is subclass 
-;;; of <net.uri:uri> in ACL library. 
+;;; in SWCLOS, and subjective CLOSobject is bound to the subjective IRI. Precisely,
+;;; a subjective IRI is an instance of class <iri> in SWCLOS and Rbase that is a subclass
+;;; of <net.uri:uri> in ACL library.
 ;;;
 ;;; Read macro `\<' reads a uri string and produces an <iri>.
-;;; A uri reference is internalized to an instance of class <iri>.
-;;; An instance of class <iri> is externalized (printed by `%W') as the same 
-;;; appearance of input uri data.
+;;; An IRI reference in files and on listener windows is internalized to an instance of
+;;; class <iri>. An instance of class <iri> is externalized (printed by `%W') as the same
+;;; appearance of input IRI data.
 ;;; ----------------------------------------------------------------------------------
-;;; <http://www.w3.org/2000/01/rdf-schema#Resource>    -> 
+;;; <http://www.w3.org/2000/01/rdf-schema#Resource>    ->
 ;;;                                   <http://www.w3.org/2000/01/rdf-schema#Resource>
 ;;; rdfs:Resource (if defined as node)                 -> rdfs:Resource
 ;;; (eq <http://somewhere> <http://somewhere>)         -> true
@@ -41,10 +46,11 @@
 ;;; (eq <http://somewhere> <http://some%20where>)      -> false
 ;;; ----------------------------------------------------------------------------------
 ;;;
-;;; An instance of <iri> has an extra slot for value just like QName. <iri-boundp> and 
-;;; <iri-value> is available for an <iri> just like <boundp> and <symbol-value>.
+;;; An instance of <iri> has an extra slot for value just like QName. <iri-boundp> and
+;;; <iri-value> is available for an <iri> just like <boundp> and <symbol-value> for symbol.
 ;;;
-;;; Two trailing characters '\<\<' returns a value bound to the <iri>.
+;;; Two trailing characters '\<\<' invokes the evaluation of the instance of <iri> and
+;;; returns a value bound to the <iri>.
 ;;; See, reader macro <gx::double-angle-bracket-reader>.
 
 (eval-when (:execute :compile-toplevel :load-toplevel)
@@ -52,8 +58,8 @@
 
 (defclass iri (net.uri:uri)
   ((value :accessor iri-value))
-  (:documentation "iri in SWCLOS and Rbase that is a subclass of net.uri:uri and able to bind a value to, 
-just like lisp symbol."))
+  (:documentation "iri in SWCLOS and Rbase that is a subclass of net.uri:uri and able to bind a value to,
+just like lisp symbol. The accessor <iri-value> allows to get and set the bound value of an <iri>."))
 
 (defmethod print-object ((iri iri) stream)
   (if *print-escape*
@@ -64,7 +70,7 @@ just like lisp symbol."))
   (proclaim '(inline iri-p iri-boundp iri-value)))
 
 (defun iri-boundp (x)
-  "Is <x> a uri and bound at its value slot?"
+  "Is <x> an iri and bound at its value slot?"
   (etypecase x
     (string (iri-boundp (iri x)))
     (iri (slot-boundp x 'value))))
@@ -118,27 +124,44 @@ just like lisp symbol."))
   (or (char= char #\:)
       (char= char #\/)
       (char= char #\?)
-      (char= char #\@)
+      (char= char #\#)
+      (char= char #\[)
+      (char= char #\])
+      (char= char #\@)   ; up to here gen-delims
+      (char= char #\!)
       (char= char #\$)
       (char= char #\&)
-      (char= char #\+)
-      (char= char #\,)
-      (char= char #\;)
-      (char= char #\=)
-      ))
-
-(defun iri-marked-char-p (char)
-  "Is this <char> marked for iri?"
-  (or (char= char #\-)
-      (char= char #\_)
-      (char= char #\.)
-      (char= char #\~)
-      (char= char #\!)
       (char= char #\')
       (char= char #\()
       (char= char #\))
       (char= char #\*)
+      (char= char #\+)
+      (char= char #\,)
+      (char= char #\;)
+      (char= char #\=)   ; up to here sub-delims
       ))
+
+(defun iri-gen-delims-p (char)
+  (or (char= char #\:)
+      (char= char #\/)
+      (char= char #\?)
+      (char= char #\#)
+      (char= char #\[)
+      (char= char #\])
+      (char= char #\@)))
+
+(defun iri-sub-delims-p (char)
+  (or (char= char #\!)
+      (char= char #\$)
+      (char= char #\&)
+      (char= char #\')
+      (char= char #\()
+      (char= char #\))
+      (char= char #\*)
+      (char= char #\+)
+      (char= char #\,)
+      (char= char #\;)
+      (char= char #\=)))
 
 (defun iri-delimiter-p (char)
   (or (char= char #\<)
@@ -147,50 +170,52 @@ just like lisp symbol."))
       (char= char #\%)
       (char= char #\")))
 
-(defun iri-unwise-p (char)
-  (or (char= char #\{)
-      (char= char #\})
-      (char= char #\|)
-      (char= char #\\)
-      (char= char #\^)
-      (char= char #\[)
-      (char= char #\])
-      (char= char #\`)))
+;;;(defun iri-marked-char-p (char)
+;;;  "Is this <char> marked for iri?"
+;;;  (or (char= char #\-)
+;;;      (char= char #\_)
+;;;      (char= char #\.)
+;;;      (char= char #\~)
+;;;      (char= char #\!)
+;;;      (char= char #\')
+;;;      (char= char #\()
+;;;      (char= char #\))
+;;;      (char= char #\*)
+;;;      ))
 
-(defun iri-escape (str)
-  "This function performs Percent-Encoding. Namely, RESERVED CHARACTERS, DELIMITERS, and UNWISE 
-   CHARACTERS for URI that is contained in <str> are escaped with percent(%) character to a triplet 
-   of \<% HEXDIG HEXDIG&gt;. Spaces and newlines are removed from <str>."
-  (cond ((and (> (length str) 5) (string= "http:" (subseq str 0 5))) str) ; this is for ontology URIs
-        (t (flet ((space-p (c)
+;;;(defun iri-unwise-p (char)
+;;;  (or (char= char #\{)
+;;;      (char= char #\})
+;;;      (char= char #\|)
+;;;      (char= char #\\)
+;;;      (char= char #\^)
+;;;      (char= char #\[)
+;;;      (char= char #\])
+;;;      (char= char #\`)))
+
+(defun iri-escape-for-symbol-name (symbol-name)
+  "<symbol-name> is a string of symbol. It turns out to iri fragment or a tail of path in IRI. So, it must be
+   escaped for gen-delims characters except #\: and #\@. In this version, a space is also escaped."
+  (cond ((and (> (length symbol-name) 5) (string= "http:" (subseq symbol-name 0 5)))
+         symbol-name) ; this is for ontology URIs
+        (t (flet ((escape-p (c)
                            (declare (optimize (speed 3) (safety 1)))
-                           (let ((code (char-code c)))
-                             (or (eq code #x20)
-                                 (eq code #x9)
-                                 (eq code #xD)
-                                 (eq code #xA)))))
-             (%iri-escape (%iri-escape-for-delimiter (remove-if #'space-p str)))))))
-
-(defun %iri-escape-for-delimiter (str)
-  "escapes uri delimiter char in <str> before making uri."
+                            (or (char= c #\/)
+                                (char= c #\?)
+                                (char= c #\#)
+                                (char= c #\[)
+                                (char= c #\])
+                                (eq (char-code c) #x20))))
+             (labels ((escape (str)
   (let ((pos 0))
-    (cond ((setq pos (position-if #'iri-delimiter-p str)) ;; found
+                                (cond ((setq pos (position-if #'escape-p str)) ; found
            (let ((c (char str pos)))
              (concatenate 'cl:string
                (subseq str 0 pos)
                (format nil "%~X"  (char-code c))
-               (%iri-escape-for-delimiter (subseq str (1+ pos))))))
-          (t str))))
-(defun %iri-escape (str)
-  "encodes the uri reserved characters to hexadecimals."
-  (let ((pos 0))
-    (cond ((setq pos (position-if #'iri-reserved-char-p str))
-           (let ((c (char str pos)))
-             (concatenate 'cl:string
-               (subseq str 0 pos)
-               (format nil "%~X"  (char-code c))
-               (%iri-escape (subseq str (1+ pos))))))
-          (t str))))
+                                           (escape (subseq str (1+ pos))))))
+                                      (t str)))))
+               (escape symbol-name))))))
 
 (defun iri-de-escape (str)
   "This function decodes Percent-Encoding to characters."
@@ -198,7 +223,7 @@ just like lisp symbol."))
     (cond ((setq pos (position #\% str :test #'char=))
            (let ((c (code-char (parse-integer (subseq str (1+ pos) (min (length str) (+ pos 3)))
                                               :radix 16))))
-             (concatenate 'cl:string 
+             (concatenate 'cl:string
                (subseq str 0 pos)
                (string c)
                (iri-de-escape (subseq str (+ pos 3))))))
@@ -218,12 +243,10 @@ just like lisp symbol."))
 ;;;
 ;;;; IRI Methods
 ;;;
-;;; Three methods are defined for generic function <iri>: when <thing> is a iri (instance of 
-;;; class iri), its interned value is returned. When <thing> is a string, <intern-uri> 
-;;; is applied to create a interned uri from the string. 
-;;;
-;;; A uri is always interned for a given uri string, because the uniqueness is required for uri 
-;;; to be bound to a value. This notion is the same as lisp symbol.
+;;; Three methods are defined for generic function <iri>: when <thing> is an iri (instance of
+;;; class iri), its interned value is returned. When <thing> is a uri but not iri, the class is
+;;; changed to <iri> and interned. When <thing> is a string, an instance of <iri> is created and
+;;; interned.
 
 (defmethod iri ((thing iri))
   "returns interned <thing> for class <gx:iri>."
@@ -238,20 +261,20 @@ just like lisp symbol."))
   (intern-uri thing))
 
 ;;;
-;;; See also, 
+;;; See also,
 ;;; \<a href='http://www.franz.com/support/documentation/8.1/doc/operators/uri/parse-uri.htm\>parse-uri'\</a\>
 ;;; in ACL document.
 ;;;
 
 (defmethod iri ((thing cl:string))
-  "when iri host exists but no iri path on the iri in <thing>, this method adds '/' to iri path. 
+  "when iri host exists but no iri path on the iri in <thing>, this method adds '/' to iri path.
    This is required for the namespace interning."
   ;(setq str (substitute-pattern "&" "&#38;" str))   ; "&#38;" is converted to "&"
-  (let ((parsed (net.uri:parse-uri thing)))
+  (let ((parsed (net.uri:parse-uri thing :class 'iri)))
     (when (and (net.uri:uri-host parsed) (null (net.uri:uri-path parsed)))
       (setf (net.uri:uri-path parsed) "/"))
-    (unless (cl:typep parsed 'iri)
-      (change-class parsed 'iri))
+;;;    (unless (cl:typep parsed 'iri)
+;;;      (change-class parsed 'iri))
     (intern-uri parsed)
     ))
 

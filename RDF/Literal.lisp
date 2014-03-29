@@ -1,13 +1,17 @@
 ;;;-*- Mode: common-lisp; syntax: common-lisp; package: :gx; base: 10 -*-
 ;;;
-;;;; Literal in Rbase System
+;;;; Literal in SWCLOS RDF Subsystem
 ;;;
+;; History
+;; -------
+;; 2010.12.08    This file is copied from Literal in SWCLOS.
+;;; ==================================================================================
 
 (cl:provide :rdfliteral)
 
 (cl:eval-when (:execute :load-toplevel :compile-toplevel)
   (cl:require :swclospackages)
-  ;; (cl:require :|xsd|)
+  (cl:require :|xsd|)
   ) ; end of eval-when
 
 (cl:defpackage :gx
@@ -74,5 +78,6 @@
    the string of <lang> may be any string or symbol and it must designate language tag."
   (assert (stringp content))
   ;; lang is internalized downcased keyword
-  (setq lang (intern (string-downcase (string lang)) :keyword))
-  (make-instance '|rdf|:|inLang| :lang lang :content content))
+  (make-instance '|rdf|:|inLang|
+                 :lang (intern (string-downcase (string lang)) :keyword)
+                 :content content))

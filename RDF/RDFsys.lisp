@@ -6,12 +6,11 @@
                    :device (pathname-device *load-truename*)
                    :directory (pathname-directory *load-truename*)))
   (setf (logical-pathname-translations "RDF")
-    `(("**;*.*"
+    `(("*.*"
        ,(make-pathname
          :host (pathname-host *rdf-directory*)
          :device (pathname-device *rdf-directory*)
-         :directory (append (pathname-directory *rdf-directory*)
-                            (list :wild-inferiors))
+         :directory (pathname-directory *rdf-directory*)
          :name :wild
          :type :wild
          ))))
@@ -28,9 +27,9 @@
   (:module :namespace    "NameSpace"    (:load-before-compile :rdfspackages :iri))
   (:module :rdfliteral   "Literal"      (:load-before-compile :xml))
   (:module :rdfshare     "RDFShare"     (:load-before-compile :rdfspackages :rdfio :namespace))
-  (:module :rdfrdf       "Rdf"          (:load-before-compile :rdfspackages :namespace :rdfshare))
-  (:module :rdfform      "RdfReader"    (:load-before-compile :rdfspackages))
-  (:module :rdfnode      "node"         (:load-before-compile :rdfspackages :iri :rdfrdf))
+  (:module :rdfparser    "RdfParser"    (:load-before-compile :rdfspackages :namespace :rdfshare))
+  (:module :rdfform      "RdfReader"    (:load-before-compile :rdfspackages :rdfparser))
+  (:module :rdfnode      "node"         (:load-before-compile :rdfspackages :iri))
   )
 
 (format t "~%;;To recompile, execute these forms:~%~s~%"
